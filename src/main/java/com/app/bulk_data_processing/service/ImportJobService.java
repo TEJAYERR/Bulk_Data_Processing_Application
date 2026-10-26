@@ -7,12 +7,16 @@ import com.app.bulk_data_processing.entity.JobStatus;
 import com.app.bulk_data_processing.producer.ImportJobProducer;
 import com.app.bulk_data_processing.repository.ImportJobRepo;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.UUID;
 
 @Service
@@ -28,6 +32,12 @@ public class ImportJobService {
 
     public JobResponse createJob(UploadRequest uploadRequest){
 
+        //check if file already exist and processed in the database
+        String fileHash = calculateFileHash(uploadRequest.getMultipartFile());
+
+        if(importJobRepo.existsByFileHash(fileHash)){
+            throw new RuntimeException("already in storage will be processed soon.");
+        }
         //save file logic
         UUID jobId = UUID.randomUUID();
 
@@ -48,6 +58,7 @@ public class ImportJobService {
         newJob.setJobStatus(JobStatus.ACCEPTED);
         newJob.setOriginalFileName(originalFileName);
         newJob.setFilePath(path.toAbsolutePath().toString());
+        newJob.setFileHash(fileHash);
 
         newJob = importJobRepo.save(newJob);
         importJobProducer.publish(jobId);
@@ -57,6 +68,18 @@ public class ImportJobService {
         jobResponse.setJobStatus(newJob.getJobStatus());
 
         return jobResponse;
+    }
+
+    private String calculateFileHash(MultipartFile file) {
+
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            byte[] result = messageDigest.digest(file.getBytes());
+
+            return HexFormat.of().formatHex(result);
+        } catch (NoSuchAlgorithmException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public JobResponse status(UUID jobId){

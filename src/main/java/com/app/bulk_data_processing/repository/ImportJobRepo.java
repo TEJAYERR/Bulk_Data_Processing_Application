@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface ImportJobRepo extends JpaRepository<ImportJob, UUID> {
+    boolean existsByFileHash(String fileHash);
 }

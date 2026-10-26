@@ -25,4 +25,14 @@ public class User {
     UUID jobId;
     @Column(nullable = false)
     long rowNumber;
+
+    public User(String name, String mobileNumber, UUID jobId, long rowNumber){
+        this.name = name;
+        this.mobileNumber = mobileNumber;
+        this.jobId = jobId;
+        this.rowNumber = rowNumber;
+    }
+
+    public User() {
+    }
 }

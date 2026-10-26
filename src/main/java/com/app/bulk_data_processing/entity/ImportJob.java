@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -22,6 +23,12 @@ public class ImportJob {
     private LocalDateTime createdAt;
     @Column(nullable = false)
     private String originalFileName;
+
+    @Column
+    private List<String> errors;
+
+    @Column(nullable = false, unique = true)
+    private String fileHash;
 
     @PrePersist
     protected void onCreate() {

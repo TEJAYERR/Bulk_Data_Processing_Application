@@ -1,10 +1,13 @@
 package com.app.bulk_data_processing.service;
 
+import com.app.bulk_data_processing.dto.JobErrorResponse;
 import com.app.bulk_data_processing.dto.JobResponse;
 import com.app.bulk_data_processing.dto.UploadRequest;
 import com.app.bulk_data_processing.entity.ImportJob;
+import com.app.bulk_data_processing.entity.ImportJobError;
 import com.app.bulk_data_processing.entity.JobStatus;
 import com.app.bulk_data_processing.producer.ImportJobProducer;
+import com.app.bulk_data_processing.repository.ImportJobErrorRepo;
 import com.app.bulk_data_processing.repository.ImportJobRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +20,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -24,10 +28,12 @@ public class ImportJobService {
 
     private final ImportJobRepo importJobRepo;
     private final ImportJobProducer importJobProducer;
+    private final ImportJobErrorRepo importJobErrorRepo;
 
-    public ImportJobService(ImportJobRepo importJobRepo, ImportJobProducer importJobProducer) {
+    public ImportJobService(ImportJobRepo importJobRepo, ImportJobProducer importJobProducer, ImportJobErrorRepo importJobErrorRepo) {
         this.importJobRepo = importJobRepo;
         this.importJobProducer = importJobProducer;
+        this.importJobErrorRepo = importJobErrorRepo;
     }
 
     public JobResponse createJob(UploadRequest uploadRequest){
@@ -85,6 +91,9 @@ public class ImportJobService {
     public JobResponse status(UUID jobId){
 
         ImportJob importJob = importJobRepo.findById(jobId).orElseThrow();
-        return new JobResponse(importJob);
+        List<JobErrorResponse> errors = importJobErrorRepo
+                .findByImportJob(importJob).stream().map(JobErrorResponse::new).toList();
+
+        return new JobResponse(importJob, errors);
     }
 }

@@ -92,7 +92,7 @@ public class ImportJobConsumer {
                         userRepo.flush();
                         users.clear();
                         mobileNumbers.clear();
-                        Thread.sleep(5000);
+                        Thread.sleep(15000);
                     }
                 }
 
@@ -111,9 +111,10 @@ public class ImportJobConsumer {
             importJobRepo.save(importJob);
             importJobRepo.flush();
         }
-        catch (IOException e){
-            throw new RuntimeException();
-        } catch (InterruptedException e) {
+        catch (Exception e){
+            importJob.setJobStatus(JobStatus.INTERRUPTED);
+            importJobRepo.save(importJob);
+
             throw new RuntimeException(e);
         }
     }
